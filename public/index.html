@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC - Character Counter</title>
+  <meta name="description" content="文字数カウンター。リアルタイムで文字数・単語数・行数をカウント。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #fafafa;
+      --surface: #fff;
+      --border: rgba(0,0,0,0.06);
+      --fg: #111;
+      --muted: #888;
+      --accent: #111;
+      --radius: 16px;
+    }
+
+    html { height: 100%; }
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: #000; color: #fff; }
+
+    /* ── Header ── */
+    header {
+      padding: 32px 32px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 4px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-left: 12px;
+    }
+
+    .clear-btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover {
+      color: var(--fg);
+      border-color: rgba(0,0,0,0.2);
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 32px 32px;
+    }
+
+    /* ── Stats Bar ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Textarea ── */
+    .editor-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
+    }
+
+    .editor {
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 2;
+      color: var(--fg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      resize: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .editor::placeholder {
+      color: #ccc;
+      font-weight: 300;
+    }
+
+    .editor:focus {
+      border-color: rgba(0,0,0,0.15);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.04);
+    }
+
+    /* ── Bottom Bar ── */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      gap: 12px;
+    }
+
+    .byte-info {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #333;
+      transform: translateY(-1px);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    .action-btn.secondary {
+      color: var(--fg);
+      background: none;
+      border: 1px solid var(--border);
+    }
+
+    .action-btn.secondary:hover {
+      border-color: rgba(0,0,0,0.2);
+      background: none;
+    }
+
+    .copied {
+      background: #2d9 !important;
+      color: #fff !important;
+      border-color: #2d9 !important;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 11px;
+      color: #ccc;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 24px 20px 0; }
+      main { padding: 20px 20px 24px; }
+
+      .logo-sub { display: none; }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .stat-card { padding: 14px 12px; }
+      .stat-value { font-size: 24px; }
+
+      .editor {
+        padding: 20px;
+        font-size: 15px;
+        min-height: 240px;
+      }
+
+      .bottom-bar {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+
+      .byte-info { text-align: center; }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .action-btn {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="logo">CC</span>
+    <span class="logo-sub">Character Counter</span>
+  </div>
+  <button class="clear-btn" onclick="clearText()">Clear</button>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value" id="chars">0</div>
+      <div class="stat-label">文字数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="charsNoSpace">0</div>
+      <div class="stat-label">空白除く</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="words">0</div>
+      <div class="stat-label">単語数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="lines">0</div>
+      <div class="stat-label">行数</div>
+    </div>
+  </div>
+
+  <div class="editor-wrap">
+    <textarea
+      class="editor"
+      id="editor"
+      placeholder="ここにテキストを入力..."
+      autofocus
+      spellcheck="false"
+    ></textarea>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="byte-info" id="byteInfo">0 bytes (UTF-8)</div>
+    <div class="actions">
+      <button class="action-btn secondary" id="pasteBtn" onclick="pasteText()">Paste</button>
+      <button class="action-btn" id="copyBtn" onclick="copyText()">Copy</button>
+    </div>
+  </div>
+</main>
+
+<footer>CC &mdash; Character Counter</footer>
+
+<script>
+  const editor = document.getElementById('editor');
+  const elChars = document.getElementById('chars');
+  const elCharsNoSpace = document.getElementById('charsNoSpace');
+  const elWords = document.getElementById('words');
+  const elLines = document.getElementById('lines');
+  const elByteInfo = document.getElementById('byteInfo');
+
+  function count() {
+    const text = editor.value;
+
+    // 文字数（改行含む）
+    const chars = [...text].length;
+
+    // スペース・改行除外
+    const charsNoSpace = [...text.replace(/[\s\u3000]/g, '')].length;
+
+    // 単語数: 日本語は1文字=1単語的にカウントしない。
+    // 英語はスペース区切り、日本語は文字数でカウント
+    let wordCount = 0;
+    if (text.trim().length > 0) {
+      // 英数字の単語
+      const engWords = text.match(/[a-zA-Z0-9]+(?:[''-][a-zA-Z0-9]+)*/g);
+      wordCount += engWords ? engWords.length : 0;
+      // 日本語文字（ひらがな・カタカナ・漢字）
+      const jpChars = text.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uF900-\uFAFF]/g);
+      wordCount += jpChars ? jpChars.length : 0;
+    }
+
+    // 行数
+    const lineCount = text.length === 0 ? 0 : text.split('\n').length;
+
+    // バイト数 (UTF-8)
+    const bytes = new Blob([text]).size;
+
+    elChars.textContent = chars.toLocaleString();
+    elCharsNoSpace.textContent = charsNoSpace.toLocaleString();
+    elWords.textContent = wordCount.toLocaleString();
+    elLines.textContent = lineCount.toLocaleString();
+    elByteInfo.textContent = `${bytes.toLocaleString()} bytes (UTF-8)`;
+  }
+
+  editor.addEventListener('input', count);
+
+  function clearText() {
+    editor.value = '';
+    count();
+    editor.focus();
+  }
+
+  async function copyText() {
+    const btn = document.getElementById('copyBtn');
+    try {
+      await navigator.clipboard.writeText(editor.value);
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 1500);
+    } catch {}
+  }
+
+  async function pasteText() {
+    try {
+      const text = await navigator.clipboard.readText();
+      editor.value = text;
+      count();
+      editor.focus();
+    } catch {}
+  }
+
+  count();
+</script>
+
+</body>
+</html>
